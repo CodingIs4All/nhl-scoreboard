@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NHL Scoreboard (live)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Inter:wght@400;600&display=swap">
+<style>
+:root{--bg:#0b0d10;--panel:#14181d;--ink:#f3f5f7;--mute:#8a94a0;--gold:#f2c230;--live:#7be0a0}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif}
+body{display:flex;flex-direction:column}
+.bar{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;padding:12px;font-size:14px;color:var(--mute)}
+select,button{background:var(--panel);color:var(--ink);border:1px solid #2a313a;border-radius:6px;padding:7px 10px;font:inherit;cursor:pointer}
+select:focus-visible,button:focus-visible{outline:2px solid var(--gold)}
+#src.ok{color:var(--live)}#src.bad{color:#f0a04b}
+#stage{flex:1;margin:0 12px 12px;min-height:0;border:1px solid #2a313a;border-radius:8px;overflow:hidden;position:relative;container-type:size;background:#000}
+#stage:fullscreen{margin:0;border:0;border-radius:0}
+.hd{position:absolute;top:8px;left:14px;right:14px;display:flex;justify-content:space-between;font:600 clamp(11px,2.2cqw,18px) 'Barlow Condensed',sans-serif;z-index:3}
+.hd .vs{color:var(--gold)}.hd small{font:12px Inter;color:var(--mute)}
+.tick{position:absolute;left:0;right:0;bottom:0;height:9cqh;min-height:28px;background:#000c;overflow:hidden;white-space:nowrap;display:flex;align-items:center;z-index:3;border-top:1px solid #ffffff22}
+.tick div{display:inline-block;padding-left:100%;animation:mq 30s linear infinite;font:600 clamp(14px,3cqh,26px) 'Barlow Condensed',sans-serif}
+.tick b{color:var(--gold);font-weight:800}
+@keyframes mq{to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion:reduce){.tick div{animation:none;padding-left:12px}}
+.msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:18px;text-align:center;padding:20px}
+.fn{font-family:'Barlow Condensed',sans-serif;font-weight:800}
+.jumbo{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,#2b3340,#07090c 70%);display:flex;flex-direction:column;align-items:center;padding:7cqh 4cqw 10cqh}
+.jumbo .ban{width:100%;display:grid;grid-template-columns:1fr 1fr;border-radius:50px 50px 0 0;overflow:hidden;font-size:clamp(20px,6cqw,60px);text-transform:uppercase}
+.jumbo .ban div{padding:2.5cqh 3cqw;text-align:center}
+.jumbo .core{flex:1;width:88%;min-height:0;display:grid;grid-template-columns:1fr 22% 1fr;background:#0a0a0a;border:2px solid #333}
+.jumbo .tm{padding:2cqh 2cqw;display:flex;flex-direction:column;justify-content:center}
+.jumbo .tm.r{text-align:right}
+.jumbo .ab{font-size:clamp(24px,7cqw,70px);opacity:.7}
+.jumbo .nm{font:600 clamp(10px,1.8cqw,18px) Inter;opacity:.8;text-transform:uppercase}
+.jumbo .sc{font-size:clamp(50px,16cqh,160px);line-height:1}
+.jumbo .mid{background:#101214;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5cqh;text-align:center;padding:1cqh}
+.jumbo .per{color:var(--gold);font-size:clamp(14px,4cqh,34px)}
+.jumbo .clk{font-size:clamp(28px,11cqh,96px);line-height:1}
+.jumbo .sub{font:12px Inter;color:var(--mute)}
+.sleek{position:absolute;inset:0;background:#000;display:grid;grid-template-rows:12% 1fr 1fr 16%;padding:0 3cqw 9cqh 3cqw}
+.sleek .row{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.2fr;align-items:center;text-align:center;font-size:clamp(28px,12cqh,110px)}
+.sleek .row.h{font:600 clamp(12px,3cqh,24px) Inter;color:var(--mute);align-items:end;padding-top:5cqh}
+.sleek .row.h span{padding-bottom:6px}
+.sleek .row span.cur{background:#ffffff0d;display:flex;align-items:center;justify-content:center;height:100%}
+.sleek .row .t{text-align:left;padding-left:2cqw;align-self:stretch;display:flex;align-items:center}
+.sleek .foot{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;text-align:center}
+.sleek .foot small{display:block;color:var(--mute);font:12px Inter}
+.sleek .stat{font-size:clamp(14px,3.6cqh,30px)}
+.sleek .time{font-size:clamp(24px,8cqh,70px);color:var(--live)}
+.vis{position:absolute;inset:0;display:grid;grid-template-rows:8cqh 1fr 8cqh 1fr;padding:34px 10px 9cqh;gap:6px;background:#000}
+.vis .top{text-align:center;font-size:clamp(18px,5cqh,40px);color:var(--live)}
+.vis .blk{display:flex;justify-content:space-between;align-items:center;padding:0 4cqw;border:1px solid #ffffff33;border-radius:8px;font-size:clamp(60px,26cqh,300px);line-height:1}
+.vis .mid{display:flex;align-items:center;justify-content:center;gap:3cqw;font-size:clamp(14px,4cqh,32px)}
+.vis .mid b{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="bar">
+  <label>League <select id="lg"><option>Hockey · NHL</option></select></label>
+  <label>Style <select id="st"><option value="jumbo">Jumbotron</option><option value="sleek">Sleek</option><option value="vis">Vision</option></select></label>
+  <label>Game <select id="gm"></select></label>
+  <span id="src">Loading…</span>
+  <button id="fs">Full screen</button>
+</div>
+<div id="stage"></div>
+<script>
+var API='https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/';
+var games=[],sel=null,cd=30,st=document.getElementById('st'),gm=document.getElementById('gm'),stage=document.getElementById('stage'),src=document.getElementById('src');
+var SAMPLE=[{id:'s1',state:'in',h:{a:'CHI',n:'Chicago Blackhawks',nick:'Blackhawks',c:'#8a0f21'},v:{a:'COL',n:'Colorado Avalanche',nick:'Avalanche',c:'#1f4d8f'},hs:2,vs:3,hp:[2,0],vp:[2,1],per:2,pl:'2nd',clk:'1:59',sh:['21','12'],pim:['12','8'],fo:['19','23'],hits:['10','8'],ts:['R. Kantserov','N. Kadri'],tk:['COL N. Kadri 2','CHI R. Kantserov 1']}];
+function col(c){return c?'#'+c:'#444'}
+function ordn(n){return ['','1st','2nd','3rd'][n]||'OT'}
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function parse(ev){
+  var c=ev.competitions[0],H=c.competitors.filter(function(x){return x.homeAway==='home'})[0],V=c.competitors.filter(function(x){return x.homeAway==='away'})[0],s=ev.status,state=s.type.state;
+  function tm(x){var t=x.team;return{a:t.abbreviation,n:t.displayName,nick:t.shortDisplayName||t.name,c:col(t.color)}}
+  function ps(x){return (x.linescores||[]).map(function(l){return l.value})}
+  function ld(x){var o=[];(x.leaders||[]).forEach(function(l){var f=l.leaders&&l.leaders[0];if(f&&f.athlete)o.push({k:l.name||'',txt:x.team.abbreviation+' '+f.athlete.shortName+' '+(f.displayValue||'')})});return o}
+  function top(x){var l=(x.leaders||[]).filter(function(l){return /goal/i.test(l.name||'')})[0]||(x.leaders||[])[0];var f=l&&l.leaders&&l.leaders[0];return f&&f.athlete?f.athlete.shortName:'–'}
+  return{id:ev.id,state:state,h:tm(H),v:tm(V),hs:+H.score||0,vs:+V.score||0,hp:ps(H),vp:ps(V),per:s.period||0,
+    pl:state==='pre'?s.type.shortDetail:state==='post'?(s.type.shortDetail||'Final'):ordn(s.period),clk:state==='in'?s.displayClock:'',
+    sh:['–','–'],pim:['–','–'],fo:['–','–'],hits:['–','–'],ts:[top(H),top(V)],tk:ld(H).concat(ld(V)).map(function(x){return x.txt})}
+}
+function stat(t,re){var a=(t.statistics||[]).filter(function(x){return re.test((x.name||'')+' '+(x.label||''))})[0];return a?a.displayValue:'–'}
+async function details(g){
+  try{var r=await fetch(API+'summary?event='+g.id);var j=await r.json();var teams=(j.boxscore&&j.boxscore.teams)||[];
+    teams.forEach(function(t){var i=t.homeAway==='home'?0:1;
+      g.sh[i]=stat(t,/shot/i);g.pim[i]=stat(t,/penalty|pim/i);g.fo[i]=stat(t,/faceoff.*(pct|percent|won)|faceOff/i);g.hits[i]=stat(t,/hit/i)})}
+  catch(e){}
+}
+async function load(){
+  try{
+    var r=await fetch(API+'scoreboard');var j=await r.json();
+    games=(j.events||[]).map(parse);
+    if(!games.length){games=SAMPLE;setSrc(false,'No NHL games on the ESPN scoreboard right now. Showing a sample game.')}
+    else setSrc(true,'● Live data (ESPN)');
+  }catch(e){games=SAMPLE;setSrc(false,'● Could not reach ESPN. Showing a sample game.')}
+  if(!games.some(function(g){return g.id===sel}))sel=games[0].id;
+  var g=cur();if(g.id[0]!=='s')await details(g);
+  fill();render();
+}
+function setSrc(ok,t){src.textContent=t;src.className=ok?'ok':'bad'}
+function cur(){return games.filter(function(g){return g.id===sel})[0]||games[0]}
+function fill(){gm.innerHTML='';games.forEach(function(g){var o=document.createElement('option');o.value=g.id;o.textContent=g.v.a+' @ '+g.h.a;if(g.id===sel)o.selected=true;gm.appendChild(o)})}
+function tick(g){var arr=g.tk.length?g.tk:[g.v.n+' at '+g.h.n];var h=arr.map(function(x){return esc(x).replace(/^([A-Z]{2,3}) /,'<b>$1</b> ')}).join(' &nbsp;·&nbsp; ');return '<div class="tick"><div>'+h+' &nbsp;·&nbsp; '+h+'</div></div>'}
+function render(){
+  var g=cur(),m=st.value,x='',time=g.clk?g.clk+' · '+g.pl:g.pl;
+  if(m==='jumbo'){
+    x='<div class="jumbo fn"><div class="ban"><div style="background:linear-gradient(90deg,#111,'+g.h.c+')">'+esc(g.h.nick)+'</div><div style="background:linear-gradient(90deg,'+g.v.c+',#111)">'+esc(g.v.nick)+'</div></div>'+
+    '<div class="core"><div class="tm" style="background:linear-gradient(135deg,'+g.h.c+'55,#0a0a0a)"><div class="ab">'+g.h.a+'</div><div class="nm">'+esc(g.h.n)+'</div><div class="sc">'+g.hs+'</div><div class="sub">Shots '+g.sh[0]+' · PIM '+g.pim[0]+'</div></div>'+
+    '<div class="mid"><div class="per">'+esc(g.pl)+'</div><div class="clk">'+(g.clk||'')+'</div><div class="sub">Faceoffs '+g.fo[0]+' – '+g.fo[1]+'<br>Hits '+g.hits[0]+' – '+g.hits[1]+'</div></div>'+
+    '<div class="tm r" style="background:linear-gradient(225deg,'+g.v.c+'55,#0a0a0a)"><div class="ab">'+g.v.a+'</div><div class="nm">'+esc(g.v.n)+'</div><div class="sc">'+g.vs+'</div><div class="sub">Shots '+g.sh[1]+' · PIM '+g.pim[1]+'</div></div></div></div>';
+  }else if(m==='sleek'){
+    var row=function(t,p,c,tt){var cells=[0,1,2].map(function(i){return '<span class="'+(i+1===g.per?'cur':'')+'">'+(i<p.length?p[i]:'')+'</span>'}).join('');return '<div class="row fn"><span class="t" style="border-left:10px solid '+c+'">'+t+'</span>'+cells+'<span>'+tt+'</span></div>'};
+    x='<div class="sleek fn"><div class="row h"><span></span><span>1</span><span>2</span><span>3</span><span>Total</span></div>'+row(g.v.a,g.vp,g.v.c,g.vs)+row(g.h.a,g.hp,g.h.c,g.hs)+
+    '<div class="foot"><div class="stat">'+esc(g.ts[1])+'<small>Top scorer</small></div><div><small>Shots '+g.sh[1]+' – '+g.sh[0]+'</small><div class="time">'+esc(time)+'</div></div><div class="stat">'+esc(g.ts[0])+'<small>Top scorer</small></div></div></div>';
+  }else{
+    x='<div class="vis fn"><div class="top">'+esc(time)+'</div><div class="blk" style="background:linear-gradient(90deg,'+g.v.c+',#0b0b0b)"><span>'+g.v.a+'</span><span>'+g.vs+'</span></div><div class="mid"><span><b>SOG</b> '+g.sh[1]+' – '+g.sh[0]+'</span><span><b>PIM</b> '+g.pim[1]+' – '+g.pim[0]+'</span></div><div class="blk" style="background:linear-gradient(90deg,'+g.h.c+',#0b0b0b)"><span>'+g.h.a+'</span><span>'+g.hs+'</span></div></div>';
+  }
+  stage.innerHTML='<div class="hd"><span>'+g.v.a+' <span class="vs">VS</span> '+g.h.a+'</span><small id="cd">Refreshing in '+cd+'</small></div>'+x+tick(g);
+}
+try{var s0=localStorage.getItem('nhl-style');if(s0)st.value=s0}catch(e){}
+st.onchange=function(){try{localStorage.setItem('nhl-style',st.value)}catch(e){}render()};
+gm.onchange=function(){sel=gm.value;load()};
+document.getElementById('fs').onclick=function(){if(stage.requestFullscreen)stage.requestFullscreen()};
+setInterval(function(){cd--;if(cd<=0){cd=30;load()}var e=document.getElementById('cd');if(e)e.textContent='Refreshing in '+cd},1000);
+load();
+</script>
+</body>
+</html>
